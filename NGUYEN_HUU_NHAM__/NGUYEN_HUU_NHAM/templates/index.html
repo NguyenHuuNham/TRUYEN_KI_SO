@@ -1,0 +1,133 @@
+<!-- index.html - Trang giới thiệu chính (làm lại) -->
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Chữ ký Số</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #e0f7fa, #f1f1f1);
+            padding: 30px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            background: #e8f5e9;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .description h3 {
+            margin-bottom: 10px;
+        }
+
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .process-box {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .tabs {
+            margin-top: 30px;
+        }
+
+        .tab {
+            display: inline-block;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            background: linear-gradient(135deg, #0056b3, #00a2ff);
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-style: italic;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔐 Hệ thống Chữ ký Số</h1>
+        <p>Ký và xác thực tài liệu một cách an toàn, dễ sử dụng</p>
+
+        <div class="description">
+            <h3>📋 Quy trình hoạt động</h3>
+            <div class="process-flow">
+                <div class="process-box">
+                    <h4>📝 Quá trình Ký (Client)</h4>
+                    <ul>
+                        <li>Upload file</li>
+                        <li>Tạo hash SHA256</li>
+                        <li>Tạo khóa RSA</li>
+                        <li>Ký hash bằng Private Key</li>
+                        <li>Gửi chữ ký và Public Key</li>
+                    </ul>
+                </div>
+                <div class="process-box">
+                    <h4>✅ Quá trình Xác thực (Server)</h4>
+                    <ul>
+                        <li>Nhận dữ liệu ký từ Client</li>
+                        <li>Tạo lại hash từ file</li>
+                        <li>Giải mã chữ ký bằng Public Key</li>
+                        <li>So sánh hash để xác thực</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <a class="tab" href="/client" target="_blank">👤 Mở Tab Client</a>
+            <a class="tab" href="/server" target="_blank">🖥️ Mở Tab Server</a>
+        </div>
+
+        <div class="footer">
+            <p>💡 Mở cả hai tab song song để thực hiện quá trình ký và xác thực</p>
+        </div>
+    </div>
+</body>
+
+</html>

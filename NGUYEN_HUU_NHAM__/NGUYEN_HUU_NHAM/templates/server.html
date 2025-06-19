@@ -1,0 +1,233 @@
+<!-- server.html - Giao diện xác thực chữ ký (làm lại) -->
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server - Xác thực chữ ký</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #e3f2fd);
+            padding: 30px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        h1,
+        h3 {
+            margin-bottom: 10px;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .step {
+            background: #f1f3f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .key-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            margin-top: 10px;
+            word-break: break-word;
+        }
+
+        .verify-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .verify-btn:hover {
+            background: linear-gradient(135deg, #218838, #17a2b8);
+        }
+
+        .verification-result {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .valid {
+            background: #e6ffed;
+            color: #155724;
+            border: 3px solid #28a745;
+        }
+
+        .invalid {
+            background: #fce8e8;
+            color: #721c24;
+            border: 3px solid #dc3545;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🖥️ Server - Xác thực chữ ký</h1>
+        <p>Nhận và xác thực chữ ký từ Client</p>
+
+        <div id="connectionStatus" class="status">Đang kết nối...</div>
+
+        <div id="waitingArea" class="step">
+            <h3>⏳ Đang chờ dữ liệu từ Client...</h3>
+            <p>Vui lòng thực hiện ký số ở tab Client.</p>
+        </div>
+
+        <div id="dataArea" style="display: none;">
+            <div class="step">
+                <h3>📄 File nhận được:</h3>
+                <p><strong>Tên file:</strong> <span id="fileName"></span></p>
+                <p><strong>Hash:</strong></p>
+                <div class="key-display" id="receivedHash"></div>
+            </div>
+
+            <div class="step">
+                <h3>🔑 Public Key từ Client:</h3>
+                <div class="key-display" id="publicKeyReceived"></div>
+
+                <h3>✍️ Chữ ký số:</h3>
+                <div class="key-display" id="signatureReceived"></div>
+
+                <button id="verifyBtn" class="verify-btn">🔍 Xác thực chữ ký</button>
+            </div>
+        </div>
+
+        <div id="verificationArea" style="display: none;">
+            <div id="verificationResult" class="verification-result"></div>
+            <div id="verificationDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let receivedData = {};
+
+        socket.on('connect', function () {
+            document.getElementById('connectionStatus').textContent = '✅ Đã kết nối đến server';
+            document.getElementById('connectionStatus').className = 'status success';
+            socket.emit('join_room', { room: 'server' });
+        });
+
+        socket.on('disconnect', function () {
+            document.getElementById('connectionStatus').textContent = '❌ Mất kết nối';
+            document.getElementById('connectionStatus').className = 'status error';
+        });
+
+        socket.on('file_info', function (data) {
+            document.getElementById('waitingArea').innerHTML = '<div class="status warning">📁 Đã nhận file: ' + data.filename + '<br>⏳ Đang chờ chữ ký...</div>';
+        });
+
+        socket.on('signature_received', function (data) {
+            receivedData = data;
+            document.getElementById('waitingArea').style.display = 'none';
+            document.getElementById('dataArea').style.display = 'block';
+            document.getElementById('fileName').textContent = data.filename;
+            document.getElementById('receivedHash').textContent = data.hash;
+            document.getElementById('publicKeyReceived').textContent = data.public_key;
+            document.getElementById('signatureReceived').textContent = data.signature;
+        });
+
+        document.getElementById('verifyBtn').addEventListener('click', function () {
+            if (receivedData.signature) {
+                socket.emit('verify_signature', {
+                    public_key: receivedData.public_key,
+                    hash: receivedData.hash,
+                    signature: receivedData.signature,
+                    filename: receivedData.filename
+                });
+            }
+        });
+
+        socket.on('verification_result', function (data) {
+            document.getElementById('verificationArea').style.display = 'block';
+
+            const resultDiv = document.getElementById('verificationResult');
+            const detailsDiv = document.getElementById('verificationDetails');
+
+            if (data.is_valid) {
+                resultDiv.innerHTML = '✅ CHỮ KÝ HỢP LỆ';
+                resultDiv.className = 'verification-result valid';
+                detailsDiv.innerHTML = `
+          <div class="status success">
+            <strong>✅ Xác thực thành công!</strong><br>
+            📄 File: ${data.filename}<br>
+            🔒 Chữ ký đúng từ Private Key<br>
+            🛡️ Dữ liệu toàn vẹn
+          </div>`;
+            } else {
+                resultDiv.innerHTML = '❌ CHỮ KÝ KHÔNG HỢP LỆ';
+                resultDiv.className = 'verification-result invalid';
+                detailsDiv.innerHTML = `
+          <div class="status error">
+            <strong>❌ Xác thực thất bại!</strong><br>
+            📄 File: ${data.filename}<br>
+            ⚠️ Chữ ký không khớp hoặc dữ liệu bị thay đổi<br>
+            🚫 Không thể tin cậy
+          </div>`;
+            }
+        });
+
+        socket.on('error', function (data) {
+            alert('Lỗi: ' + data.message);
+        });
+    </script>
+</body>
+
+</html>
